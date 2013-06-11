@@ -1,0 +1,7 @@
+*~
+*pyc
+*dat
+*db
+*txt
+*.kate-swp
+.cache/
