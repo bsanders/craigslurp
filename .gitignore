@@ -6,3 +6,4 @@
 *.kate-swp
 *jpg
 .cache/
+credentials.txt
