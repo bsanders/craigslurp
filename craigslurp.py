@@ -14,23 +14,17 @@ from time import mktime, sleep
 from datetime import datetime
 
 class Feed:
-	feedName = ""
-	feedURL = ""
-	feedOwner = ""
-	feedEmail = ""
-	feedData = []
-	rawFeedData = None
-	feedCacheFile = ""
 	feedStaleTime = 60 * 60 * 6 # 60 sec * 60 min * 6 = six hours
-	feedDBConnection = None
-	feedDBCursor = None
-	dbTableName = ""
 	
 	def __init__(self, name, url, owner, email):
 		self.feedName = name
 		self.feedURL = url
 		self.feedOwner = owner
 		self.feedOwnerEmail = email
+		self.feedData = []
+		self.rawFeedData = None
+		self.feedDBConnection = None
+		self.feedDBCursor = None
 		self.dbTableName = "{0}_{1}".format(self.feedName, self.feedOwner)
 		self.feedCacheFile = "{0}_{1}.dat".format(self.feedName, self.feedOwner)
 		self.readFromCache()
