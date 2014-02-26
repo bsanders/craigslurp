@@ -8,12 +8,7 @@ import sqlite3
 import httplib2
 import random
 
-import smtplib
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
-from email.MIMEText import MIMEText
-from email.Utils import COMMASPACE, formatdate
-from email import Encoders
+import sendEmail
 
 from time import mktime, sleep
 from datetime import datetime
@@ -152,61 +147,6 @@ class Feed:
 			with open(fname, 'wb') as outFile:
 				outFile.write(imageData)
 
-	def sendEmail(self, to, fro, subject, text, files=[]):
-		username = fro
-		password = "csusm082011"
-
-		msg = MIMEMultipart()
-		msg['from'] = fro
-		msg['to'] = COMMASPACE.join(to)
-		msg['Date'] = formatdate(localtime=True)
-		msg['Subject'] = subject
-
-		msg.attach( MIMEText(text) )
-
-		for filename in files:
-			part = MIMEBase('application', "octet-stream")
-			part.set_payload( open(filename,"rb").read() )
-			Encoders.encode_base64(part)
-			part.add_header('Content-Disposition', 'attachment; filename="%s"'
-                       % os.path.basename(filename))
-			msg.attach(part)
-
-		server = smtplib.SMTP('smtp.gmail.com', 587)
-		server.set_debuglevel(1)
-		server.ehlo()
-		server.starttls()
-		server.login(username, password)
-		server.sendmail(fro, to, msg.as_string())
-		server.quit()
-
-
-	def email(self, link, attachments=False):		
-		fromAddress = "bilzzabot@gmail.com"
-		username = fromAddress
-		password = "csusm082011"
-		toAddress  = [self.feedOwnerEmail]
-		subject  = "Cool Craiglist Stuff"
-		msgBody  = "Hey, look {0}!\r\n\r\n  I found some cool stuff (about {1}!) for you on Craiglist!\r\n".format(self.feedOwner, self.feedName)
-		
-		clTitle = self.feedData[0]['title'][:50]
-		if self.feedData[0]['title'] != clTitle:
-			clTitle = clTitle[:47] + "..."
-		clLink = self.feedData[0]['link']
-		
-		msgBody += "{0} : {1}\r\n".format(clTitle, clLink)
-
-		msg = ("From: {0}\r\nTo: {1}\r\nSubject: {2}\r\n\r\n".format(fromAddress, ", ".join(toAddress), subject) )
-		msg += msgBody
-
-		server = smtplib.SMTP('smtp.gmail.com', 587)
-		server.set_debuglevel(1)
-		server.ehlo()
-		server.starttls()
-		server.login(username, password)
-		server.sendmail(fromAddress, toAddress, msg)
-		server.quit()
-
 	def createEmailBody(self, listing):
 		msgBody  = "Hey, look {0}!\r\n\r\nI found some cool stuff (about {1}!) for you on Craiglist!\r\n".format(self.feedOwner, self.feedName)
 		
@@ -218,41 +158,36 @@ class Feed:
 		msgBody += "{0} : {1}\r\n".format(clTitle, clLink)
 		return msgBody
 
+#feeds = [
+	#("http://sandiego.craigslist.org/search/?areaID=8&subAreaID=&query=pellet+stove&catAbb=sss&format=rss",
+		#"julinjoe@gmail.com",
+		#"",
+	#),
+	#("http://sandiego.craigslist.org/search/apa?query=north+park&srchType=A&minAsk=&maxAsk=1400&bedrooms=2&format=rss",
+		#"clare.estelle@gmail.com;billysanders@gmail.com",
+		#"",
+	#),
+#]
 
-#		sys.exit()
+# If file called as a script from the command line, run this
+if __name__ == "__main__":
+	testfeed = ("Chickens", "http://sandiego.craigslist.org/search/gra?hasPic=1&query=chickens&srchType=A&format=rss", "Clare", "clare.estelle@gmail.com")
 
-feeds = [
-	("http://sandiego.craigslist.org/search/?areaID=8&subAreaID=&query=pellet+stove&catAbb=sss&format=rss",
-		"julinjoe@gmail.com",
-		"",
-	),
-	("http://sandiego.craigslist.org/search/apa?query=north+park&srchType=A&minAsk=&maxAsk=1400&bedrooms=2&format=rss",
-		"clare.estelle@gmail.com;billysanders@gmail.com",
-		"",
-	),
-]
+	random.seed()
 
-testfeed = ("pelletstove", "http://sandiego.craigslist.org/search/?areaID=8&subAreaID=&query=pellet+stove&catAbb=sss&format=rss", "bill", "billysanders@gmail.com")
+	# unpack the tuple for arguments
+	myfeed = Feed(*testfeed)
 
-testfeed = ("Chickens", "http://sandiego.craigslist.org/search/gra?hasPic=1&query=chickens&srchType=A&format=rss", "Clare", "clare.estelle@gmail.com")
+	myfeed.fillTable()
 
-random.seed()
+	images = []
+	if 'hasPic=1' in myfeed.feedURL:
+		random_listing = random.choice(myfeed.feedData)
+		images = myfeed.getAllImages(random_listing['link'])
 
-myfeed = Feed(*testfeed)
-
-myfeed.fillTable()
-
-images = []
-if 'hasPic=1' in myfeed.feedURL:
-	random_listing = random.choice(myfeed.feedData)
-	images = myfeed.getAllImages(random_listing['link'])
-
-images = [os.path.basename(img) for img in images]
-#images = images[:1]
-myfeed.sendEmail([myfeed.feedOwnerEmail], "bilzzabot@gmail.com", "Cool Craiglist Stuff", myfeed.createEmailBody(random_listing), images)
-
-
-#myfeed
-
-#myfeed.email()
-
+	images = [os.path.basename(img) for img in images]
+	
+	#get credentials here
+	
+	sendEmail.smtp(username, password)
+	sendEmail.sendEmail([myfeed.feedOwnerEmail], "Cool Craiglist Stuff", myfeed.createEmailBody(random_listing), images)
