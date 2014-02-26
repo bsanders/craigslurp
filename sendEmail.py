@@ -8,8 +8,6 @@ from email.Utils import COMMASPACE, formatdate
 from email import Encoders
 
 class smtp():
-	username = ""
-	password = ""
 	
 	# The class constructor just takes a username and password
 	def __init__(self, username, password):
